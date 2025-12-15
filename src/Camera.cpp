@@ -18,6 +18,11 @@
 #define HREF_GPIO_NUM     47
 #define PCLK_GPIO_NUM     13
 
+// Threat detection settings.
+#define Z_WIDTH  53 
+#define Z_HEIGHT 40 
+#define MIN_THREAT_MASS 400
+
 bool Camera::init() {
     config.ledc_channel = LEDC_CHANNEL_0;
     config.ledc_timer = LEDC_TIMER_0;
@@ -47,8 +52,6 @@ bool Camera::init() {
     // QQVGA resolution is 160x120
     config.frame_size = FRAMESIZE_QQVGA;
 
-    config.jpeg_quality = 12;
-
     config.fb_count = 1;
 
     esp_err_t err = esp_camera_init(&config);
@@ -58,12 +61,90 @@ bool Camera::init() {
     return true;
 }
 
-camera_fb_t* Camera::capture() {
-    return esp_camera_fb_get();
+void Camera::calibrate() {
+    // Get a frame
+    fb = esp_camera_fb_get();
+    if (!fb) return;
+
+    // Set base values and constants
+    long total_brightness = 0;
+    const int total_pixels = 160 * 120;
+
+    // Loop through all of the pixels and grab color value (brightness)
+    for (int i=0; i<total_pixels; i++) {
+        total_brightness += fb->buf[i];
+    }
+
+    // Calculate baseline brightness for the room.
+    baseline_brightness = total_brightness / total_pixels;
+
+    // If baseline is too low, flash the LED 5 times.
+    if (baseline_brightness < 40) {
+        baseline_brightness = 40;
+        pinMode(LED_BUILTIN, OUTPUT);
+        for (int i; i<5; i++){
+            digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+            delay(100);
+        }
+        // Turn the LED off after the blink.
+        digitalWrite(LED_BUILTIN, LOW);
+    }
+
+    // Clear the framebuffer
+    esp_camera_fb_return(fb);
+    fb = nullptr;
 }
 
-void Camera::release(camera_fb_t* fb) {
-    if (fb) {
-        esp_camera_fb_return(fb);
+Threat Camera::scanSky() {
+    Threat result = {false, -1, 0}; // default, no threat
+
+    // Get image
+    fb = esp_camera_fb_get();
+    if (!fb) return result; // Failed image, return no threat.
+
+    // Prepare the zone scores for each grid zone
+    int zone_scores[9];
+    memset(zone_scores, 0, sizeof(zone_scores));
+
+    // Set dynamic threshold
+    int dynamic_threshold = baseline_brightness - SENSITIVITY;
+    // loop through pixels, add to threat zone
+    for (int y=0; y<120; y++) {
+        for (int x=0; x<160; x++) {
+
+            u_int8_t pixel_value = fb->buf[(y * 160) + x];
+            
+            if (pixel_value < dynamic_threshold) {
+                int grid_x = x / Z_WIDTH;
+                int grid_y = y / Z_HEIGHT;
+
+                if (grid_x > 2) grid_x = 2;
+                if (grid_y > 2) grid_y = 2;
+
+                int zone_index = (grid_y * 3) + grid_x;
+                zone_scores[zone_index]++;
+            }
+        }
     }
+
+    // Find zone with greatest pixel mass
+    int max_score = 0;
+    for (int i=0; i<9; i++) {
+        if (zone_scores[i] > max_score) {
+            max_score = zone_scores[i];
+            result.zone_index = i;
+        }
+    }
+    result.mass = max_score;
+
+    // Check if the mass is greater than the minimum threat
+    if (result.mass > MIN_THREAT_MASS) {
+        result.acive = true;
+    }
+
+    // Clean up frame buffer
+    esp_camera_fb_return(fb);
+    fb = nullptr;
+
+    return result;
 }

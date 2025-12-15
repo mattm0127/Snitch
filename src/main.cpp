@@ -101,6 +101,11 @@ void setup() {
       delay(100);
     }
   }
+
+  // Calibrate camera 
+  delay(1000);
+  snitchEye.calibrate();
+
   // Initialize Flight Controller
   //snitchPilot.begin(RX_PIN, TX_PIN);
 
