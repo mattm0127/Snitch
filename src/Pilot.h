@@ -2,6 +2,7 @@
 #define PILOT_H
 
 #include <Arduino.h>
+#include <Camera.h>
 
 class Pilot {
 public:
@@ -11,18 +12,32 @@ public:
     // Starts the connection to the Flight Controller
     void begin(int rxPin, int txPin);
 
-    // To be called in the main loop
-    void update();
-
     // Public methods for the webserver
     void arm();
     void disarm();
     void setThrottle(int throttleValue);
 
+    // Process the camera response
+    void cameraMotion(Threat &threat);
+
+    // To be called in the main loop
+    void update();
 private:
+    // Constants
+    const int THROTTLE_DEFAULT = 1500;
+    const int THROTTLE_OFF = 1000;
+    const int YAW_DEFAULT = 1500;
+    const int PITCH_DEFAULT = 1500;
+    const int ROLL_DEFAULT = 1500;
+    const int ARM_VALUE = 1800;
+    const int DISARM_VALUE = 1000;
+
     // Internal state
     bool _isArmed;
     int _currentThrottle;
+    int _currentYaw;
+    int _currentPitch;
+    int _currentRoll;
     unsigned long _lastMspTime;
 
     // Internal helpers: MSP Protocol - Flight Controls

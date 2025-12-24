@@ -5,7 +5,7 @@
 #include "esp_camera.h"
 
 struct Threat {
-    bool acive; // Is there an active threat
+    bool active; // Is there an active threat
     int zone_index; // Which zone index has the threat.
     int mass; // Mass (pixel ct) of threat.
 };

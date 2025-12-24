@@ -9,8 +9,12 @@
 // Public 
 
 Pilot::Pilot(){
+    // Set default values, no throttle in initiation
     _isArmed = false;
-    _currentThrottle = 1000;
+    _currentThrottle = THROTTLE_OFF;
+    _currentYaw = YAW_DEFAULT;
+    _currentPitch = PITCH_DEFAULT;
+    _currentRoll = ROLL_DEFAULT;
     _lastMspTime = 0;
 }
 
@@ -24,27 +28,72 @@ void Pilot::arm(){
 
 void Pilot::disarm(){
     _isArmed = false;
-    _currentThrottle = 1000;
+    _currentThrottle = THROTTLE_OFF;
 }
 
 void Pilot::setThrottle(int throttleValue){
+
     if (throttleValue < 1000) throttleValue = 1000;
     if (throttleValue > 2000) throttleValue = 2000; 
 
     _currentThrottle = throttleValue;
 }
 
+void Pilot::cameraMotion(Threat &threat){
+    // If there isn o threat, reset to defaults and hover
+    // If there is a threat, move accordingly.
+    if (!threat.active) {
+        _currentThrottle = THROTTLE_DEFAULT;
+        _currentYaw = YAW_DEFAULT;
+        _currentPitch = PITCH_DEFAULT;
+        _currentRoll = ROLL_DEFAULT;
+    } 
+    else if (threat.active) {
+        switch (threat.zone_index) {
+            case (0):
+                NULL;
+                break;
+            case (1):
+                NULL;
+                break;
+            case (2):
+                NULL;
+                break;
+            case (3):
+                NULL;
+                break;
+            case (4):
+                NULL;
+                break;
+            case (5):
+                NULL;
+                break;
+            case (6):
+                NULL;
+                break;
+            case (7):
+                NULL;
+                break;
+            case (8):
+                NULL;
+                break;
+        }
+    }
+
+}
+
 void Pilot::update(){
     if (millis() - _lastMspTime > 20) {
         _lastMspTime = millis();
         if (_isArmed) {
-            sendRC(_currentThrottle, 1500, 1500, 1500, 1800);
+            sendRC(_currentThrottle, _currentYaw, _currentPitch, _currentRoll, ARM_VALUE);
         }
         else {
-            sendRC(1000, 1500, 1500, 1500, 1000);
+            sendRC(THROTTLE_OFF, YAW_DEFAULT, PITCH_DEFAULT, ROLL_DEFAULT, DISARM_VALUE);
         }
     }
 }
+
 
 // Private Helpers
 

@@ -139,7 +139,7 @@ Threat Camera::scanSky() {
 
     // Check if the mass is greater than the minimum threat
     if (result.mass > MIN_THREAT_MASS) {
-        result.acive = true;
+        result.active = true;
     }
 
     // Clean up frame buffer
