@@ -108,7 +108,10 @@ void Pilot::sendRC(uint16_t throttle, uint16_t yaw, uint16_t pitch, uint16_t rol
   data[8] = aux1 & 0xFF;     data[9] = aux1 >> 8;
   
   // Clear unused channels
-  for(int i=10; i<16; i++) data[i] = 0;
+  for(int i=10; i<16; i+=2) {
+    data[i] = 1000 & 0xFF;
+    data[i+1] = 1000 >> 8;
+  }
 
   sendMsp(MSP_SET_RAW_RC, data, 16);
 }

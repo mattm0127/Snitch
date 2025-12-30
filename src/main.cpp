@@ -10,7 +10,7 @@ const char* password = "goldensnitch";
 
 
 // --- PINS ---
-// Check your specific board pinout!
+// Pinout specific to Seeed XIAO ESP32S3
 #define RX_PIN D7  // Connect to FC TX
 #define TX_PIN D6  // Connect to FC RX
 
@@ -18,7 +18,7 @@ const char* password = "goldensnitch";
 // GLOBAL VARIABLES
 WebServer server(80);
 Camera snitchEye;
-//Pilot snitchPilot;
+Pilot snitchPilot;
 
 
 // --- 3. HTML INTERFACE ---
@@ -70,19 +70,19 @@ void handleRoot() {
 }
 
 void handleArm() {
-  //snitchPilot.arm(); // Call the Pilot Class!
+  snitchPilot.arm(); // Call the Pilot Class!
   server.send(200, "text/plain", "ARMED");
 }
 
 void handleDisarm() {
-  //snitchPilot.disarm(); // Call the Pilot Class!
+  snitchPilot.disarm(); // Call the Pilot Class!
   server.send(200, "text/plain", "DISARMED");
 }
 
 void handleThrottle() {
   if (server.hasArg("val")) {
     int val = server.arg("val").toInt();
-    //snitchPilot.setThrottle(val); // Update the Pilot Class
+    snitchPilot.setThrottle(val); // Update the Pilot Class
   }
   server.send(200, "text/plain", "OK");
 }
@@ -91,7 +91,6 @@ void handleThrottle() {
 // SETUP FUNCTION
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(20000000);
 
   // Flash the LED if the camera does not initialize properly.
   if (!snitchEye.init()) {
@@ -104,10 +103,10 @@ void setup() {
 
   // Calibrate camera 
   delay(1000);
-  snitchEye.calibrate();
+  //snitchEye.calibrate();
 
   // Initialize Flight Controller
-  //snitchPilot.begin(RX_PIN, TX_PIN);
+  snitchPilot.begin(RX_PIN, TX_PIN);
 
   // B. Initialize WiFi
   WiFi.softAP(ssid, password);
@@ -129,11 +128,13 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   server.handleClient();
-  //snitchPilot.update();
+  snitchPilot.update();
 
-  // If wifi disconnects, cut power.
+  //If wifi disconnects, cut power.
   if (WiFi.softAPgetStationNum() == 0) {
-     //snitchPilot.disarm();
+     snitchPilot.disarm();
   }
 }
 // put function definitions here:
+
+

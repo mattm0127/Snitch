@@ -82,7 +82,7 @@ void Camera::calibrate() {
     if (baseline_brightness < 40) {
         baseline_brightness = 40;
         pinMode(LED_BUILTIN, OUTPUT);
-        for (int i; i<5; i++){
+        for (int i=0; i<5; i++){
             digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
             delay(100);
         }
