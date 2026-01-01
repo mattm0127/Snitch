@@ -54,7 +54,7 @@ void Pilot::cameraMotion(Threat &threat){
                 NULL;
                 break;
             case (1):
-                NULL;
+                _currentPitch = 1200;
                 break;
             case (2):
                 NULL;
@@ -79,7 +79,6 @@ void Pilot::cameraMotion(Threat &threat){
                 break;
         }
     }
-
 }
 
 void Pilot::update(){

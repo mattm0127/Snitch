@@ -52,7 +52,7 @@ bool Camera::init() {
     // QQVGA resolution is 160x120
     config.frame_size = FRAMESIZE_QQVGA;
 
-    config.fb_count = 1;
+    config.fb_count = 2;
 
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
@@ -68,26 +68,25 @@ void Camera::calibrate() {
 
     // Set base values and constants
     long total_brightness = 0;
-    const int total_pixels = 160 * 120;
 
     // Loop through all of the pixels and grab color value (brightness)
-    for (int i=0; i<total_pixels; i++) {
+    for (int i=0; i<fb->len; i+=8) {
         total_brightness += fb->buf[i];
     }
 
     // Calculate baseline brightness for the room.
-    baseline_brightness = total_brightness / total_pixels;
+    baseline_brightness = total_brightness / (fb->len/8);
 
     // If baseline is too low, flash the LED 5 times.
     if (baseline_brightness < 40) {
         baseline_brightness = 40;
         pinMode(LED_BUILTIN, OUTPUT);
-        for (int i=0; i<5; i++){
+        for (int i=0; i<6; i++){
             digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
             delay(100);
         }
         // Turn the LED off after the blink.
-        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(LED_BUILTIN, HIGH);
     }
 
     // Clear the framebuffer
@@ -103,29 +102,31 @@ Threat Camera::scanSky() {
     if (!fb) return result; // Failed image, return no threat.
 
     // Prepare the zone scores for each grid zone
+    // Grid 0, 1, 2 -> "Front" of drone
+    // Grid 3, 4, 5 -> "Middle" of drone
+    // Grid 6, 7, 8 -> "Back" of drone
     int zone_scores[9];
     memset(zone_scores, 0, sizeof(zone_scores));
 
-    // Set dynamic threshold
+    // Set dynamic threshold (default to 40 if too low)
     int dynamic_threshold = baseline_brightness - SENSITIVITY;
+    if (dynamic_threshold < 0) dynamic_threshold = 40;
     // loop through pixels, add to threat zone
-    for (int y=0; y<120; y++) {
-        for (int x=0; x<160; x++) {
+    for (int y = 0; y < 120; y ++) {
+    // Pre-calculate Y zone once per row
+    int grid_y = (y < 40) ? 0 : (y < 80 ? 1 : 2); 
+    int y_offset = grid_y * 3;
+    int row_start = y * 160;
 
-            u_int8_t pixel_value = fb->buf[(y * 160) + x];
-            
-            if (pixel_value < dynamic_threshold) {
-                int grid_x = x / Z_WIDTH;
-                int grid_y = y / Z_HEIGHT;
-
-                if (grid_x > 2) grid_x = 2;
-                if (grid_y > 2) grid_y = 2;
-
-                int zone_index = (grid_y * 3) + grid_x;
-                zone_scores[zone_index]++;
-            }
+    for (int x = 0; x < 160; x ++) {
+        uint8_t pixel_value = fb->buf[row_start + x];
+        
+        if (pixel_value < dynamic_threshold) {
+            int grid_x = (x < 53) ? 0 : (x < 106 ? 1 : 2);
+            zone_scores[y_offset + grid_x]++;
         }
     }
+}
 
     // Find zone with greatest pixel mass
     int max_score = 0;
