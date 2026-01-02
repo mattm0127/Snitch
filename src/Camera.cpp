@@ -118,15 +118,15 @@ Threat Camera::scanSky() {
     int y_offset = grid_y * 3;
     int row_start = y * 160;
 
-    for (int x = 0; x < 160; x ++) {
-        uint8_t pixel_value = fb->buf[row_start + x];
-        
-        if (pixel_value < dynamic_threshold) {
-            int grid_x = (x < 53) ? 0 : (x < 106 ? 1 : 2);
-            zone_scores[y_offset + grid_x]++;
+        for (int x = 0; x < 160; x ++) {
+            uint8_t pixel_value = fb->buf[row_start + x];
+            
+            if (pixel_value < dynamic_threshold) {
+                int grid_x = (x < 53) ? 0 : (x < 106 ? 1 : 2);
+                zone_scores[y_offset + grid_x]++;
+            }
         }
     }
-}
 
     // Find zone with greatest pixel mass
     int max_score = 0;
