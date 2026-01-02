@@ -19,7 +19,7 @@ public:
     void calibrate();
 
     // Scan for incoming attack
-    Threat scanSky();
+    Threat scanSky(camera_fb_t* gfb);
 
 private:
     // Config info

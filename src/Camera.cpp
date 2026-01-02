@@ -43,6 +43,7 @@ bool Camera::init() {
     config.pin_pwdn = PWDN_GPIO_NUM;
     config.pin_reset = RESET_GPIO_NUM;
 
+    config.grab_mode = CAMERA_GRAB_LATEST;
     // External Clock frequency
     config.xclk_freq_hz = 20000000;
 
@@ -52,7 +53,7 @@ bool Camera::init() {
     // QQVGA resolution is 160x120
     config.frame_size = FRAMESIZE_QQVGA;
 
-    config.fb_count = 2;
+    config.fb_count = 3;
 
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
@@ -94,12 +95,11 @@ void Camera::calibrate() {
     fb = nullptr;
 }
 
-Threat Camera::scanSky() {
+Threat Camera::scanSky(camera_fb_t* gfb) {
     Threat result = {false, -1, 0}; // default, no threat
 
     // Get image
-    fb = esp_camera_fb_get();
-    if (!fb) return result; // Failed image, return no threat.
+    if (!gfb) return result; // Failed image, return no threat.
 
     // Prepare the zone scores for each grid zone
     // Grid 0, 1, 2 -> "Front" of drone
@@ -119,7 +119,7 @@ Threat Camera::scanSky() {
     int row_start = y * 160;
 
         for (int x = 0; x < 160; x ++) {
-            uint8_t pixel_value = fb->buf[row_start + x];
+            uint8_t pixel_value = gfb->buf[row_start + x];
             
             if (pixel_value < dynamic_threshold) {
                 int grid_x = (x < 53) ? 0 : (x < 106 ? 1 : 2);
@@ -144,8 +144,6 @@ Threat Camera::scanSky() {
     }
 
     // Clean up frame buffer
-    esp_camera_fb_return(fb);
-    fb = nullptr;
 
     return result;
 }

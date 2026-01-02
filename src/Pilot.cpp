@@ -11,6 +11,7 @@
 Pilot::Pilot(){
     // Set default values, no throttle in initiation
     _isArmed = false;
+    _useVision = false;
     _currentThrottle = THROTTLE_OFF;
     _currentYaw = YAW_DEFAULT;
     _currentPitch = PITCH_DEFAULT;
@@ -39,11 +40,21 @@ void Pilot::setThrottle(int throttleValue){
     _currentThrottle = throttleValue;
 }
 
+void Pilot::toggleVision() {
+    if (!_useVision) {
+        _useVision = true;
+    }
+    else {
+        _useVision = false;
+    }
+}
+
 void Pilot::cameraMotion(Threat &threat){
+    if (!_useVision) return;
     // If there isn o threat, reset to defaults and hover
     // If there is a threat, move accordingly.
     if (!threat.active) {
-        _currentThrottle = THROTTLE_DEFAULT;
+        _currentThrottle = THROTTLE_OFF;
         _currentYaw = YAW_DEFAULT;
         _currentPitch = PITCH_DEFAULT;
         _currentRoll = ROLL_DEFAULT;

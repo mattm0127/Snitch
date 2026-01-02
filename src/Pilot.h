@@ -18,6 +18,7 @@ public:
     void setThrottle(int throttleValue);
 
     // Process the camera response
+    void toggleVision();
     void cameraMotion(Threat &threat);
 
     // To be called in the main loop
@@ -34,6 +35,7 @@ private:
 
     // Internal state
     bool _isArmed;
+    bool _useVision;
     int _currentThrottle;
     int _currentYaw;
     int _currentPitch;
